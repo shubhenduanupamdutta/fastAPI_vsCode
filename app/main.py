@@ -19,8 +19,11 @@ app = FastAPI()
 
 while True:
     try:
-        conn = psycopg2.connect(host=config.HOST, dbname=config.DB_NAME,
-                                user=config.USER, password=config.PASSWORD, cursor_factory=RealDictCursor)
+        conn = psycopg2.connect(host=config.HOST,
+                                dbname=config.DB_NAME,
+                                user=config.USER,
+                                password=config.PASSWORD,
+                                cursor_factory=RealDictCursor)
         cursor = conn.cursor()
         print("Connection to database was successful.")
         break
@@ -28,24 +31,6 @@ while True:
         print("Connection to database failed")
         print(f"Error: {e}")
         time.sleep(5)
-
-POSTS = [{"title": "sdlkf", "id": 1}, {"title": "Beaches", "id": 2}]
-
-
-def find_post(post_id: int) -> dict[str, Any] | None:
-    """
-    Finds specific post with id = post_id from all posts
-
-    Args:
-        post_id (int): id of the post to be retrieved
-
-    Returns:
-        dict[str, Any] | None: returns the post as a dictionary
-    """
-    for post in POSTS:
-        if post["id"] == post_id:
-            return post
-    return None
 
 
 class Post(BaseModel):
@@ -79,7 +64,9 @@ def get_posts():
     Returns:
         json: jsonified all post data
     """
-    return {"data": POSTS}
+    cursor.execute("""SELECT * FROM posts""")
+    posts = cursor.fetchall()
+    return {"data": posts}
 
 
 @app.post("/create-post")
@@ -97,7 +84,7 @@ def create_post_body(payload: dict = Body(...)):
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_post(new_post: Post):
+def create_post(post: Post):
     """
     Takes in data from post request validates using pydantic and operates on it as needed.
 
@@ -107,12 +94,11 @@ def create_post(new_post: Post):
     Returns:
         json: success or failure message
     """
-    new_post_dict = new_post.model_dump()
-    new_post_dict["id"] = randrange(0, 10000000000)
-    response_msg: dict[str, Any] = {"response": "Success, new post created"}
-    response_msg["new_post"] = new_post_dict
-    POSTS.append(new_post_dict)
-    return response_msg
+    cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """,
+                   (post.title, post.content, post.published))
+    new_post = cursor.fetchone()
+    conn.commit()
+    return {"msg": "Successfully added post", "data": new_post}
 
 
 @app.get("/posts/{post_id}")
@@ -126,17 +112,15 @@ def get_post(post_id: int):
     Returns:
         dict: retrieved post in dictionary format
     """
-    post = find_post(post_id)
-    if not post:
-        # One way to get required status_code
-        # response.status_code = status.HTTP_404_NOT_FOUND
-        # return {"message": f"Post with id = {post_id} not found."}
+    cursor.execute("""SELECT * FROM posts WHERE id = %(int)s""",
+                   {'int': post_id})
+    post = cursor.fetchone()
 
-        # Better Way
+    if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Post with id = {post_id} was not found"
                             )
-    # print(post)
+
     return {"message": f"Here is your post with id = {post_id}",
             "post": post
             }
@@ -156,7 +140,7 @@ def delete_post(post_id: int):
     Returns:
         dict: message details
     """
-    post = find_post(post_id)
+
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Post with id = {post_id} was not found"
