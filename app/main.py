@@ -3,20 +3,33 @@ Fast API app for tutorial on freeCodeCamp
 by Sanjeev Thyagarajan
 
 """
+
+import os
 from random import randrange
 from typing import Any
 from fastapi import Body, FastAPI, HTTPException, Response, status
 from pydantic import BaseModel
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
 
+
+load_dotenv()  # load environment variables
+HOST = os.environ['HOST']
+DBNAME = os.environ['DATABASE']
+USER = os.environ['USER']
+PASSWORD = os.environ['PASSWORD']
 
 app = FastAPI()
 
+try:
+    conn = psycopg2.connect(host=HOST, dbname=DBNAME,
+                            user=USER, password=PASSWORD)
+except Exception as e:
+    print(e)
 
-POSTS: list[dict[str, Any]] = [
-    {"title": "my name", "content": "Shubhendu", "id": 1},
-    {"title": "Beaches on florida", "content": "Beaches", "id": 2}
-]
 
+POSTS = [{"title": "sdlkf", "id": 1}, {"title": "Beaches", "id": 2}]
 
 def find_post(post_id: int) -> dict[str, Any] | None:
     """
@@ -165,7 +178,7 @@ def update_post(post_id: int, updated_post: Post):
 
     Returns:
         json: message containing new post details
-        
+
     """
     post = find_post(post_id)
     if not post:
