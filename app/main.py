@@ -126,12 +126,17 @@ def delete_post(post_id: int):
     Returns:
         dict: message details
     """
+    cursor.execute("""DELETE FROM posts
+                   WHERE id = %(int)s
+                   RETURNING * """,
+                   {'int': post_id})
+    deleted_post = cursor.fetchone()
 
-    if not post:
+    if not deleted_post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Post with id = {post_id} was not found"
                             )
-    POSTS.remove(post)
+    conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -151,7 +156,7 @@ def update_post(post_id: int, updated_post: Post):
         json: message containing new post details
 
     """
-    post = find_post(post_id)
+    cursor.execute("""UPDATE posts SET title = %s, content = %s , published""")
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Post with id = {post_id} was not found"
