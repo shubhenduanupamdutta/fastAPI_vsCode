@@ -5,9 +5,7 @@ by Sanjeev Thyagarajan
 """
 
 import time
-from random import randrange
-from typing import Any
-from fastapi import Body, FastAPI, HTTPException, Response, status
+from fastapi import FastAPI, HTTPException, Response, status
 from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -80,7 +78,9 @@ def create_post(post: Post):
     Returns:
         json: success or failure message
     """
-    cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """,
+    cursor.execute("""INSERT INTO posts (title, content, published)
+                   VALUES (%s, %s, %s) 
+                   RETURNING * """,
                    (post.title, post.content, post.published))
     new_post = cursor.fetchone()
     conn.commit()
