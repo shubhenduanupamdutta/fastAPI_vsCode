@@ -141,7 +141,7 @@ def delete_post(post_id: int):
 
 
 @app.put("/posts/{post_id}")
-def update_post(post_id: int, updated_post: Post):
+def update_post(post_id: int, post: Post):
     """
     Updates old post if new data and old post id is provided.
 
@@ -156,12 +156,17 @@ def update_post(post_id: int, updated_post: Post):
         json: message containing new post details
 
     """
-    cursor.execute("""UPDATE posts SET title = %s, content = %s , published""")
-    if not post:
+    cursor.execute("""UPDATE posts SET
+                   title = %(title)s, 
+                   content = %(cont)s , 
+                   published = %(bool)s 
+                   WHERE id = %(int)s RETURNING *""",
+                   {'title': post.title, 'cont': post.content,
+                    'bool': post.published, 'int': post_id})
+    new_post = cursor.fetchone()
+    if not new_post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Post with id = {post_id} was not found"
                             )
-    post_dict = updated_post.model_dump()
-    post_dict["id"] = post_id
-    POSTS[POSTS.index(post)] = post_dict
-    return {"data": post_dict}
+    conn.commit()
+    return {"data": new_post}
