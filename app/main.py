@@ -4,32 +4,33 @@ by Sanjeev Thyagarajan
 
 """
 
-import os
+import time
 from random import randrange
 from typing import Any
 from fastapi import Body, FastAPI, HTTPException, Response, status
 from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from dotenv import load_dotenv
+from config import config  # load data from .env
 
-
-load_dotenv()  # load environment variables
-HOST = os.environ['HOST']
-DBNAME = os.environ['DATABASE']
-USER = os.environ['USER']
-PASSWORD = os.environ['PASSWORD']
+# loading variables from .env file
 
 app = FastAPI()
 
-try:
-    conn = psycopg2.connect(host=HOST, dbname=DBNAME,
-                            user=USER, password=PASSWORD)
-except Exception as e:
-    print(e)
-
+while True:
+    try:
+        conn = psycopg2.connect(host=config.HOST, dbname=config.DB_NAME,
+                                user=config.USER, password=config.PASSWORD, cursor_factory=RealDictCursor)
+        cursor = conn.cursor()
+        print("Connection to database was successful.")
+        break
+    except Exception as e:
+        print("Connection to database failed")
+        print(f"Error: {e}")
+        time.sleep(5)
 
 POSTS = [{"title": "sdlkf", "id": 1}, {"title": "Beaches", "id": 2}]
+
 
 def find_post(post_id: int) -> dict[str, Any] | None:
     """
