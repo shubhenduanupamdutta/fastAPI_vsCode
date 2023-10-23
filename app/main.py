@@ -69,20 +69,6 @@ def get_posts():
     return {"data": posts}
 
 
-@app.post("/create-post")
-def create_post_body(payload: dict = Body(...)):
-    """
-    Takes in a post request to create a post and does the operation to store data.
-
-    Returns:
-        json: returns a message describing the result (success or failure)
-    """
-    # print(payload)
-    response_msg = {"response": "Success, new post created."}
-    response_msg["new_post"] = f"title {payload['title']} content {payload['content']}"
-    return response_msg
-
-
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_post(post: Post):
     """
