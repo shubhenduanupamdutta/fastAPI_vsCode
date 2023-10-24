@@ -33,7 +33,8 @@ while True:
 
 class Post(BaseModel):
     """
-    Post model for data validation and easy parsing data from post request for social media post
+    Post model for data validation and easy parsing data from post request for
+    social media post
 
     Args:
         BaseModel (_type_): pydantic base model
@@ -70,16 +71,18 @@ def get_posts():
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_post(post: Post):
     """
-    Takes in data from post request validates using pydantic and operates on it as needed.
+    Takes in data from post request validates using pydantic and operates on
+    it as needed.
 
     Args:
-        new_post (Post): Data from post request, in the format of Post class defined
+        new_post (Post): Data from post request, in the format of Post class
+        defined
 
     Returns:
         json: success or failure message
     """
     cursor.execute("""INSERT INTO posts (title, content, published)
-                   VALUES (%s, %s, %s) 
+                   VALUES (%s, %s, %s)
                    RETURNING * """,
                    (post.title, post.content, post.published))
     new_post = cursor.fetchone()
@@ -147,9 +150,10 @@ def update_post(post_id: int, post: Post):
 
     Args:
         post_id (int): id of the post to be updated
-        updated_post (Post): New content of the post (all required content needs to be provided)
+        updated_post (Post): New content of the post (all required content
+        needs to be provided)
 
-    Raises: 
+    Raises:
         HTTPException: raises 404 if post is not found in database
 
     Returns:
@@ -157,9 +161,9 @@ def update_post(post_id: int, post: Post):
 
     """
     cursor.execute("""UPDATE posts SET
-                   title = %(title)s, 
-                   content = %(cont)s , 
-                   published = %(bool)s 
+                   title = %(title)s,
+                   content = %(cont)s ,
+                   published = %(bool)s
                    WHERE id = %(int)s RETURNING *""",
                    {'title': post.title, 'cont': post.content,
                     'bool': post.published, 'int': post_id})
