@@ -5,13 +5,18 @@ by Sanjeev Thyagarajan
 """
 
 import time
-from fastapi import FastAPI, HTTPException, Response, status
+from fastapi import Depends, FastAPI, HTTPException, Response, status
 from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from app import models
+from .database import engine, get_db
+from sqlalchemy.orm import Session
 from config import config  # load data from .env
 
-# loading variables from .env file
+# load database tables i.e. models
+models.Base.metadata.create_all(bind=engine)
+
 
 app = FastAPI()
 
@@ -53,6 +58,11 @@ def root():
         json: "message"
     """
     return {"message": "Welcome to my API"}
+
+
+@app.get("/sqlalchemy")
+def test_posts(db: Session = Depends(get_db)):
+    return {"Status": "Success"}
 
 
 @app.get("/posts")
