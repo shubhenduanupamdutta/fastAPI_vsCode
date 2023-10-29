@@ -4,13 +4,13 @@ by Sanjeev Thyagarajan
 
 """
 
-import time
+# import time
 from fastapi import Depends, FastAPI, HTTPException, Response, status
-import psycopg2
-from psycopg2.extras import RealDictCursor
+# import psycopg2
+# from psycopg2.extras import RealDictCursor
 from .database import engine, get_db
 from sqlalchemy.orm import Session
-from config import config  # load data from .env
+# from config import config  # load data from .env
 from . import models, schemas
 
 # load database tables i.e. models
@@ -150,7 +150,8 @@ def delete_post(post_id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/posts/{post_id}")
-def update_post(post_id: int, post: schemas.Post, db: Session = Depends(get_db)):
+def update_post(post_id: int, post: schemas.Post,
+                db: Session = Depends(get_db)):
     """
     Updates old post if new data and old post id is provided.
 
