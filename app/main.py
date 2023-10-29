@@ -9,7 +9,6 @@ from fastapi import Depends, FastAPI, HTTPException, Response, status
 from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from app import models
 from .database import engine, get_db
 from sqlalchemy.orm import Session
 from config import config  # load data from .env
@@ -109,7 +108,7 @@ def create_post(post: Post, db: Session = Depends(get_db)):
 
 
 @app.get("/posts/{post_id}")
-def get_post(post_id: int):
+def get_post(post_id: int, db: Session = Depends(get_db)):
     """
     Retrieve the post with id = post_id and return the posts
 
@@ -119,10 +118,10 @@ def get_post(post_id: int):
     Returns:
         dict: retrieved post in dictionary format
     """
-    cursor.execute("""SELECT * FROM posts WHERE id = %(int)s""",
-                   {'int': post_id})
-    post = cursor.fetchone()
-
+    # cursor.execute("""SELECT * FROM posts WHERE id = %(int)s""",
+    #                {'int': post_id})
+    # post = cursor.fetchone()
+    post = db.query(models.Post).filter(models.Post.id == post_id).first()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Post with id = {post_id} was not found"
@@ -134,7 +133,7 @@ def get_post(post_id: int):
 
 
 @app.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(post_id: int):
+def delete_post(post_id: int, db: Session = Depends(get_db)):
     """
     Delete post with id of id.
 
@@ -147,17 +146,20 @@ def delete_post(post_id: int):
     Returns:
         dict: message details
     """
-    cursor.execute("""DELETE FROM posts
-                   WHERE id = %(int)s
-                   RETURNING * """,
-                   {'int': post_id})
-    deleted_post = cursor.fetchone()
+    # cursor.execute("""DELETE FROM posts
+    #                WHERE id = %(int)s
+    #                RETURNING * """,
+    #                {'int': post_id})
+    # deleted_post = cursor.fetchone()
+    post_query = db.query(models.Post).filter(models.Post.id == post_id)
 
-    if not deleted_post:
+    if not post_query.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Post with id = {post_id} was not found"
                             )
-    conn.commit()
+    post_query.delete(synchronize_session=False)
+    db.commit()
+    # conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
