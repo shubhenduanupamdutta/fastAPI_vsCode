@@ -18,3 +18,18 @@ class PostCreate(PostBase):
     ...
 
 # class PostUpdate(PostBase):
+
+# Defining a model for response schema
+# (for in case if we want to remove some data from db.query)
+
+
+class Post(BaseModel):
+    """
+    Response Schema, Response must adhere to this format
+
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    title: str
+    content: str
+    published: bool
