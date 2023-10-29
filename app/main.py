@@ -46,12 +46,6 @@ def root():
     return {"message": "Welcome to my API"}
 
 
-@app.get("/sqlalchemy")
-def test_posts(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).all()
-    return {"data": posts}
-
-
 @app.get("/posts")
 def get_posts(db: Session = Depends(get_db)):
     """
@@ -67,7 +61,7 @@ def get_posts(db: Session = Depends(get_db)):
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: schemas.Post, db: Session = Depends(get_db)):
+def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     """
     Takes in data from post request validates using pydantic and operates on
     it as needed.
@@ -150,7 +144,7 @@ def delete_post(post_id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/posts/{post_id}")
-def update_post(post_id: int, post: schemas.Post,
+def update_post(post_id: int, post: schemas.PostCreate,
                 db: Session = Depends(get_db)):
     """
     Updates old post if new data and old post id is provided.
