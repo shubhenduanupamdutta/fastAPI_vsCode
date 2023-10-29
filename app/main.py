@@ -82,7 +82,7 @@ def get_posts(db: Session = Depends(get_db)):
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: Post):
+def create_post(post: Post, db: Session = Depends(get_db)):
     """
     Takes in data from post request validates using pydantic and operates on
     it as needed.
@@ -94,12 +94,17 @@ def create_post(post: Post):
     Returns:
         json: success or failure message
     """
-    cursor.execute("""INSERT INTO posts (title, content, published)
-                   VALUES (%s, %s, %s)
-                   RETURNING * """,
-                   (post.title, post.content, post.published))
-    new_post = cursor.fetchone()
-    conn.commit()
+    # cursor.execute("""INSERT INTO posts (title, content, published)
+    #                VALUES (%s, %s, %s)
+    #                RETURNING * """,
+    #                (post.title, post.content, post.published))
+    # new_post = cursor.fetchone()
+    # conn.commit()
+
+    new_post = models.Post(**post.model_dump())
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
     return {"msg": "Successfully added post", "data": new_post}
 
 
