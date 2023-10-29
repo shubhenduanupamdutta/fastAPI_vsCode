@@ -46,7 +46,7 @@ def root():
     return {"message": "Welcome to my API"}
 
 
-@app.get("/posts")
+@app.get("/posts", response_model=list[schemas.Post])
 def get_posts(db: Session = Depends(get_db)):
     """
     Generate all the posts stored
@@ -60,7 +60,8 @@ def get_posts(db: Session = Depends(get_db)):
     return posts
 
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
+@app.post("/posts", status_code=status.HTTP_201_CREATED,
+          response_model=schemas.Post)
 def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     """
     Takes in data from post request validates using pydantic and operates on
@@ -87,7 +88,7 @@ def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     return new_post
 
 
-@app.get("/posts/{post_id}")
+@app.get("/posts/{post_id}", response_model=schemas.Post)
 def get_post(post_id: int, db: Session = Depends(get_db)):
     """
     Retrieve the post with id = post_id and return the posts
@@ -141,7 +142,7 @@ def delete_post(post_id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.put("/posts/{post_id}")
+@app.put("/posts/{post_id}", response_model=schemas.Post)
 def update_post(post_id: int, post: schemas.PostCreate,
                 db: Session = Depends(get_db)):
     """

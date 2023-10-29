@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 
 
@@ -23,13 +24,16 @@ class PostCreate(PostBase):
 # (for in case if we want to remove some data from db.query)
 
 
-class Post(BaseModel):
+class Post(PostBase):
     """
     Response Schema, Response must adhere to this format
 
     Args:
-        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+        PostBase (Base Post Model): Above defined PostBase model
     """
-    title: str
-    content: str
-    published: bool
+    id: int
+    # published: bool
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
