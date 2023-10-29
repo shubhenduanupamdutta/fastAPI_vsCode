@@ -6,13 +6,12 @@ by Sanjeev Thyagarajan
 
 import time
 from fastapi import Depends, FastAPI, HTTPException, Response, status
-from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from .database import engine, get_db
 from sqlalchemy.orm import Session
 from config import config  # load data from .env
-from . import models
+from . import models, schemas
 
 # load database tables i.e. models
 models.Base.metadata.create_all(bind=engine)
@@ -20,33 +19,20 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-while True:
-    try:
-        conn = psycopg2.connect(host=config.HOST,
-                                dbname=config.DB_NAME,
-                                user=config.USER,
-                                password=config.PASSWORD,
-                                cursor_factory=RealDictCursor)
-        cursor = conn.cursor()
-        print("Connection to database was successful.")
-        break
-    except Exception as e:
-        print("Connection to database failed")
-        print(f"Error: {e}")
-        time.sleep(5)
-
-
-class Post(BaseModel):
-    """
-    Post model for data validation and easy parsing data from post request for
-    social media post
-
-    Args:
-        BaseModel (_type_): pydantic base model
-    """
-    title: str
-    content: str
-    published: bool = True
+# while True:
+#     try:
+#         conn = psycopg2.connect(host=config.HOST,
+#                                 dbname=config.DB_NAME,
+#                                 user=config.USER,
+#                                 password=config.PASSWORD,
+#                                 cursor_factory=RealDictCursor)
+#         cursor = conn.cursor()
+#         print("Connection to database was successful.")
+#         break
+#     except Exception as e:
+#         print("Connection to database failed")
+#         print(f"Error: {e}")
+#         time.sleep(5)
 
 
 @app.get("/")
@@ -81,7 +67,7 @@ def get_posts(db: Session = Depends(get_db)):
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: Post, db: Session = Depends(get_db)):
+def create_post(post: schemas.Post, db: Session = Depends(get_db)):
     """
     Takes in data from post request validates using pydantic and operates on
     it as needed.
@@ -164,7 +150,7 @@ def delete_post(post_id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/posts/{post_id}")
-def update_post(post_id: int, post: Post):
+def update_post(post_id: int, post: schemas.Post, db: Session = Depends(get_db)):
     """
     Updates old post if new data and old post id is provided.
 
@@ -180,17 +166,21 @@ def update_post(post_id: int, post: Post):
         json: message containing new post details
 
     """
-    cursor.execute("""UPDATE posts SET
-                   title = %(title)s,
-                   content = %(cont)s ,
-                   published = %(bool)s
-                   WHERE id = %(int)s RETURNING *""",
-                   {'title': post.title, 'cont': post.content,
-                    'bool': post.published, 'int': post_id})
-    new_post = cursor.fetchone()
-    if not new_post:
+    # cursor.execute("""UPDATE posts SET
+    #                title = %(title)s,
+    #                content = %(cont)s ,
+    #                published = %(bool)s
+    #                WHERE id = %(int)s RETURNING *""",
+    #                {'title': post.title, 'cont': post.content,
+    #                 'bool': post.published, 'int': post_id})
+    # new_post = cursor.fetchone()
+    post_query = db.query(models.Post).filter(models.Post.id == post_id)
+    if not post_query.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Post with id = {post_id} was not found"
                             )
-    conn.commit()
-    return {"data": new_post}
+    post_query.update(post.model_dump(),  # type: ignore
+                      synchronize_session=False)
+    db.commit()
+    # conn.commit()
+    return {"data": post_query.first()}
