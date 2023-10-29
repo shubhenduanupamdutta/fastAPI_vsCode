@@ -13,6 +13,7 @@ from app import models
 from .database import engine, get_db
 from sqlalchemy.orm import Session
 from config import config  # load data from .env
+from . import models
 
 # load database tables i.e. models
 models.Base.metadata.create_all(bind=engine)
@@ -62,19 +63,21 @@ def root():
 
 @app.get("/sqlalchemy")
 def test_posts(db: Session = Depends(get_db)):
-    return {"Status": "Success"}
+    posts = db.query(models.Post).all()
+    return {"data": posts}
 
 
 @app.get("/posts")
-def get_posts():
+def get_posts(db: Session = Depends(get_db)):
     """
     Generate all the posts stored
 
     Returns:
         json: jsonified all post data
     """
-    cursor.execute("""SELECT * FROM posts""")
-    posts = cursor.fetchall()
+    # cursor.execute("""SELECT * FROM posts""")
+    # posts = cursor.fetchall()
+    posts = db.query(models.Post).all()
     return {"data": posts}
 
 
