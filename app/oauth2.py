@@ -19,16 +19,16 @@ def create_access_token(data: dict):
         jwt: jwt access token
     """
     to_encode = data.copy()
-    expire = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, ALGORITHM)
     return encoded_jwt
 
 
 def verify_token(token: str, credentials_exception):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
-        id = payload.get("users_id")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        id = payload.get("user_id")
         if not id:
             raise credentials_exception
         token_data = schemas.TokenData(id=id)
