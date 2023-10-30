@@ -3,10 +3,13 @@ from ..database import get_db
 from fastapi import Depends, HTTPException, status, APIRouter, Response
 from sqlalchemy.orm import Session
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/posts",
+    tags=["Posts"]
+)
 
 
-@router.get("/posts", response_model=list[schemas.Post])
+@router.get("/", response_model=list[schemas.Post])
 def get_posts(db: Session = Depends(get_db)):
     """
     Generate all the posts stored
@@ -20,7 +23,7 @@ def get_posts(db: Session = Depends(get_db)):
     return posts
 
 
-@router.post("/posts", status_code=status.HTTP_201_CREATED,
+@router.post("/", status_code=status.HTTP_201_CREATED,
              response_model=schemas.Post)
 def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     """
@@ -48,7 +51,7 @@ def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     return new_post
 
 
-@router.get("/posts/{post_id}", response_model=schemas.Post)
+@router.get("/{post_id}", response_model=schemas.Post)
 def get_post(post_id: int, db: Session = Depends(get_db)):
     """
     Retrieve the post with id = post_id and return the posts
@@ -71,7 +74,7 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
     return post
 
 
-@router.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(post_id: int, db: Session = Depends(get_db)):
     """
     Delete post with id of id.
