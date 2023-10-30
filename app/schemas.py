@@ -52,3 +52,14 @@ class UserOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UserLogin(BaseModel):
+    """
+    Post request for authentication schema
+
+    Args:
+        BaseModel (pydantic.BaseModel): Pydantic Base Model
+    """
+    email: EmailStr
+    password: str
