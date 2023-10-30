@@ -68,9 +68,9 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     """Schema for access token"""
     access_token: str
-    type: str
+    token_type: str
 
 
 class TokenData(BaseModel):
     """Schema for token data"""
-    id: str | None = None
+    id: int | None = None
