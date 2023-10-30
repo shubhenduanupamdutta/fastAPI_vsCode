@@ -1,4 +1,4 @@
-from .. import models, schemas
+from .. import models, schemas, oauth2
 from ..database import get_db
 from fastapi import Depends, HTTPException, status, APIRouter, Response
 from sqlalchemy.orm import Session
@@ -10,7 +10,8 @@ router = APIRouter(
 
 
 @router.get("/", response_model=list[schemas.Post])
-def get_posts(db: Session = Depends(get_db)):
+def get_posts(db: Session = Depends(get_db),
+              user_id: int = Depends(oauth2.get_current_user)):
     """
     Generate all the posts stored
 
@@ -25,7 +26,8 @@ def get_posts(db: Session = Depends(get_db)):
 
 @router.post("/", status_code=status.HTTP_201_CREATED,
              response_model=schemas.Post)
-def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
+def create_post(post: schemas.PostCreate, db: Session = Depends(get_db),
+                user_id: int = Depends(oauth2.get_current_user)):
     """
     Takes in data from post request validates using pydantic and operates on
     it as needed.
@@ -52,7 +54,8 @@ def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/{post_id}", response_model=schemas.Post)
-def get_post(post_id: int, db: Session = Depends(get_db)):
+def get_post(post_id: int, db: Session = Depends(get_db),
+             user_id: int = Depends(oauth2.get_current_user)):
     """
     Retrieve the post with id = post_id and return the posts
 
@@ -75,7 +78,8 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(post_id: int, db: Session = Depends(get_db)):
+def delete_post(post_id: int, db: Session = Depends(get_db),
+                user_id: int = Depends(oauth2.get_current_user)):
     """
     Delete post with id of id.
 
@@ -105,9 +109,10 @@ def delete_post(post_id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.put("/posts/{post_id}", response_model=schemas.Post)
+@router.put("/{post_id}", response_model=schemas.Post)
 def update_post(post_id: int, post: schemas.PostCreate,
-                db: Session = Depends(get_db)):
+                db: Session = Depends(get_db),
+                user_id: int = Depends(oauth2.get_current_user)):
     """
     Updates old post if new data and old post id is provided.
 
