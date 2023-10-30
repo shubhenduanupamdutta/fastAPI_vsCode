@@ -5,8 +5,9 @@ by Sanjeev Thyagarajan
 """
 
 # import time
+from email.policy import HTTP
 from fastapi import Depends, FastAPI, HTTPException, Response, status
-# import psycopg2
+from psycopg2.errors import UniqueViolation
 # from psycopg2.extras import RealDictCursor
 from .database import engine, get_db
 from sqlalchemy.orm import Session
@@ -185,7 +186,11 @@ def update_post(post_id: int, post: schemas.PostCreate,
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     new_user = models.User(**user.model_dump())
     db.add(new_user)
-    db.commit()
+    try:
+        db.commit()
+    except UniqueViolation:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail=f"Email {user.email} already registered.")
     db.refresh(new_user)
 
     return new_user
