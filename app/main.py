@@ -11,7 +11,8 @@ from sqlalchemy.exc import IntegrityError
 from .database import engine, get_db
 from sqlalchemy.orm import Session
 # from config import config  # load data from .env
-from . import models, schemas
+from . import models, schemas, utils
+
 
 # load database tables i.e. models
 models.Base.metadata.create_all(bind=engine)
@@ -183,13 +184,17 @@ def update_post(post_id: int, post: schemas.PostCreate,
 @app.post("/users", status_code=status.HTTP_201_CREATED,
           response_model=schemas.UserOut)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    # Hash the password
+    user.password = utils.hash_password(user.password)
     new_user = models.User(**user.model_dump())
     db.add(new_user)
+
     try:
         db.commit()
     except IntegrityError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail=f"Email {user.email} already registered.")
+
     db.refresh(new_user)
 
     return new_user
