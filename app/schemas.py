@@ -1,5 +1,6 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
+from typing_extensions import Annotated
 
 
 class UserCreate(BaseModel):
@@ -75,3 +76,8 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     """Schema for token data"""
     id: int | None = None
+
+
+class Vote(BaseModel):
+    post_id: int
+    dir: Annotated[int, Field(strict=True, le=1)]
