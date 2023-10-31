@@ -32,8 +32,8 @@ class Post(PostBase):
         PostBase (Base Post Model): Above defined PostBase model
     """
     id: int
-    # published: bool
     created_at: datetime
+    owner_id: int
 
     class Config:
         from_attributes = True
