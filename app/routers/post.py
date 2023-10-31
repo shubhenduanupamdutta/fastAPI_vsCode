@@ -98,11 +98,15 @@ def delete_post(post_id: int, db: Session = Depends(get_db),
     #                {'int': post_id})
     # deleted_post = cursor.fetchone()
     post_query = db.query(models.Post).filter(models.Post.id == post_id)
+    post = post_query.first()
 
-    if not post_query.first():
+    if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Post with id = {post_id} was not found"
-                            )
+                            detail=f"Post with id = {post_id} was not found")
+
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Not authorized to perform this action.")
     post_query.delete(synchronize_session=False)
     db.commit()
     # conn.commit()
@@ -110,7 +114,7 @@ def delete_post(post_id: int, db: Session = Depends(get_db),
 
 
 @router.put("/{post_id}", response_model=schemas.Post)
-def update_post(post_id: int, post: schemas.PostCreate,
+def update_post(post_id: int, updated_post: schemas.PostCreate,
                 db: Session = Depends(get_db),
                 current_user=Depends(oauth2.get_current_user)):
     """
@@ -137,11 +141,15 @@ def update_post(post_id: int, post: schemas.PostCreate,
     #                 'bool': post.published, 'int': post_id})
     # new_post = cursor.fetchone()
     post_query = db.query(models.Post).filter(models.Post.id == post_id)
-    if not post_query.first():
+    post = post_query.first()
+    if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Post with id = {post_id} was not found"
-                            )
-    post_query.update(post.model_dump(),  # type: ignore
+                            detail=f"Post with id = {post_id} was not found")
+
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Not Authorized to perform this action.")
+    post_query.update(updated_post.model_dump(),  # type: ignore
                       synchronize_session=False)
     db.commit()
     # conn.commit()
