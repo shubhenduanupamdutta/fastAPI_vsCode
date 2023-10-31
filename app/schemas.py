@@ -2,6 +2,32 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
 
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserOut(BaseModel):
+    """Response schema for user"""
+    id: int
+    email: EmailStr
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class UserLogin(BaseModel):
+    """
+    Post request for authentication schema
+
+    Args:
+        BaseModel (pydantic.BaseModel): Pydantic Base Model
+    """
+    email: EmailStr
+    password: str
+
+
 class PostBase(BaseModel):
     """
     Post model for data validation and easy parsing data from post request for
@@ -34,35 +60,10 @@ class Post(PostBase):
     id: int
     created_at: datetime
     owner_id: int
+    owner: UserOut
 
     class Config:
         from_attributes = True
-
-
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class UserOut(BaseModel):
-    """Response schema for user"""
-    id: int
-    email: EmailStr
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class UserLogin(BaseModel):
-    """
-    Post request for authentication schema
-
-    Args:
-        BaseModel (pydantic.BaseModel): Pydantic Base Model
-    """
-    email: EmailStr
-    password: str
 
 
 class Token(BaseModel):
