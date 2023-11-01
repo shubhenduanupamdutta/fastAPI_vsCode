@@ -67,6 +67,11 @@ class Post(PostBase):
         from_attributes = True
 
 
+class PostOut(BaseModel):
+    Post: Post
+    votes: int
+
+
 class Token(BaseModel):
     """Schema for access token"""
     access_token: str
