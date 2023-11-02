@@ -1,0 +1,1 @@
+alembic upgrade head; gunicorn app.main:app;
