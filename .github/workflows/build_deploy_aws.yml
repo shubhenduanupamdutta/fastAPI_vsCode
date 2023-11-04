@@ -87,11 +87,13 @@ jobs:
           key: ${{secrets.SSH_KEY}}
           port: 22
           script: |
+            sudo -i
             su - shubhendu
             whoami
             cd /home/shubhendu/fastapi_app/src/
             git pull
             echo ${{secrets.PROD_PASSWORD}} | sudo -S systemctl restart api
+            exit
             exit
             exit
 
