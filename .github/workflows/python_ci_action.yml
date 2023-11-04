@@ -1,0 +1,43 @@
+name: Python FastAPI app CI and CD
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        environment: Testing
+        env:
+            PASSWORD: ${{secrets.PASSWORD}}
+            USER: ${{secrets.USER}}
+            DATABASE: ${{secrets.DB_NAME}}
+            HOST: ${{secrets.DB_HOST}}}
+            DB_PORT: 5432
+            SECRET_KEY: ${{secrets.SECRET_KEY}}
+            ALGORITHM: HS256
+            ACCESS_TOKEN_EXPIRE_MINUTES: ${{secrets.ACCESS_TOKEN_EXPIRE_MINUTES}}
+
+        steps:
+            - name: Get our repository
+              uses: actions/checkout@v4
+
+            - name: Set up Python version
+              uses: actions/setup-python@v4
+              with:
+                python-version: '3.11'
+            
+            - name: Display python version
+              run: python -c "import sys; print(sys.version)"
+
+            - name: Install dependencies
+              run: |
+                python -m pip install --upgrade pip
+                pip install pytest
+                if [-f requirements.txt]; then pip install -r requirements.txt; fi
+            
+            - name: Test app with pytest
+              run: pytest
