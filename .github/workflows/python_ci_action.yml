@@ -41,19 +41,19 @@ jobs:
 
         steps:
 
-            - name: Get github actions ip
-              id: ip
-              uses: haythem/public-ip@v1.3
+            # - name: Get github actions ip
+            #   id: ip
+            #   uses: haythem/public-ip@v1.3
 
-            - name: configure aws credentials
-              uses: aws-actions/configure-aws-credentials@v1.7.0
-              with:
-                role-to-assume: arn:aws:iam::030943376547:role/GitHubActionRole
-                role-session-name:  GitHub_to_AWS_via_FederatedOIDC
-                aws-region: ap-south-1
-            - name: Add github actions IP to security group
-              run: |
-                aws ec2 authorize-security-group-ingress --group-name ${{secrets.AWS_SG_NAME}} --protocol tcp --port 5432 --cidr ${{steps.ip.outputs.ipv4}}/32    
+            # - name: configure aws credentials
+            #   uses: aws-actions/configure-aws-credentials@v1.7.0
+            #   with:
+            #     role-to-assume: arn:aws:iam::030943376547:role/GitHubActionRole
+            #     role-session-name:  GitHub_to_AWS_via_FederatedOIDC
+            #     aws-region: ap-south-1
+            # - name: Add github actions IP to security group
+            #   run: |
+                # aws ec2 authorize-security-group-ingress --group-name ${{secrets.AWS_SG_NAME}} --protocol tcp --port 5432 --cidr ${{steps.ip.outputs.ipv4}}/32    
             - name: Get our repository
               uses: actions/checkout@v4
 
@@ -74,6 +74,6 @@ jobs:
             - name: Test app with pytest
               run: pytest --disable-warnings -v -s
 
-            - name: Remove github actions ip from security group
-              run: |
-                aws ec2 revoke-security-group-ingress --group-name ${{ secrets.AWS_SG_NAME }} --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+            # - name: Remove github actions ip from security group
+            #   run: |
+            #     aws ec2 revoke-security-group-ingress --group-name ${{ secrets.AWS_SG_NAME }} --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
