@@ -18,7 +18,7 @@ jobs:
             HOST: ${{secrets.DB_HOST}}}
             DB_PORT: 5432
             SECRET_KEY: ${{secrets.SECRET_KEY}}
-            ALGORITHM: HS256
+            ALGORITHM: ${{secrets.ALGORITHM}}
             ACCESS_TOKEN_EXPIRE_MINUTES: ${{secrets.ACCESS_TOKEN_EXPIRE_MINUTES}}
 
         steps:
