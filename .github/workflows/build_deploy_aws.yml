@@ -1,104 +1,99 @@
 name: Python FastAPI app CI and CD
 
 on:
-    push:
-        branches: [main]
-    pull_request:
-        branches: [main]
-
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        environment: Testing
+  build:
+    runs-on: ubuntu-latest
+    environment: Testing
+    env:
+      PASSWORD: ${{secrets.PASSWORD}}
+      USER: ${{secrets.USER}}
+      DATABASE: ${{secrets.DB_NAME}}
+      HOST: ${{secrets.DB_HOST}}
+      DB_PORT: 5432
+      SECRET_KEY: ${{secrets.SECRET_KEY}}
+      ALGORITHM: ${{secrets.ALGORITHM}}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${{secrets.ACCESS_TOKEN_EXPIRE_MINUTES}}
+
+    services:
+      postgres:
+        image: postgres
         env:
-            PASSWORD: ${{secrets.PASSWORD}}
-            USER: ${{secrets.USER}}
-            DATABASE: ${{secrets.DB_NAME}}
-            HOST: ${{secrets.DB_HOST}}
-            DB_PORT: 5432
-            SECRET_KEY: ${{secrets.SECRET_KEY}}
-            ALGORITHM: ${{secrets.ALGORITHM}}
-            ACCESS_TOKEN_EXPIRE_MINUTES: ${{secrets.ACCESS_TOKEN_EXPIRE_MINUTES}}
-        
-        services:
-          postgres:
-            image: postgres
-            env:
-              POSTGRES_PASSWORD: ${{secrets.PASSWORD}}
-              POSTGRES_DB: ${{secrets.DB_NAME}}_test
-            ports:
-              - 5432:5432
-            options: >-
-              --health-cmd pg_isready
-              --health-interval 10s
-              --health-timeout 5s
-              --health-retries 5
+          POSTGRES_PASSWORD: ${{secrets.PASSWORD}}
+          POSTGRES_DB: ${{secrets.DB_NAME}}_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
-        steps:
+    steps:
+      - name: Get our repository
+        uses: actions/checkout@v4
 
-            - name: Get our repository
-              uses: actions/checkout@v4
+      - name: Set up Python version
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
-            - name: Set up Python version
-              uses: actions/setup-python@v4
-              with:
-                python-version: '3.11'
-            
-            - name: Display python version
-              run: python -c "import sys; print(sys.version)"
+      - name: Display python version
+        run: python -c "import sys; print(sys.version)"
 
-            - name: Install dependencies
-              run: |
-                python -m pip install --upgrade pip
-                pip install pytest
-                if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-            
-            - name: Test app with pytest
-              run: pytest --disable-warnings -v -s
-  
-    deploy:
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      runs-on: ubuntu-latest
-      needs: build
+      - name: Test app with pytest
+        run: pytest --disable-warnings -v -s
 
-      permissions:
-        id-token: write
-        contents: read
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
 
-      steps:
+    permissions:
+      id-token: write
+      contents: read
 
-        - name: Get github actions ip
-          id: ip
-          uses: haythem/public-ip@v1.3
+    steps:
+      - name: Get github actions ip
+        id: ip
+        uses: haythem/public-ip@v1.3
 
-        - name: configure aws credentials
-          uses: aws-actions/configure-aws-credentials@v1.7.0
-          with:
-            role-to-assume: arn:aws:iam::030943376547:role/GitHubActionRole
-            role-session-name:  GitHub_to_AWS_via_FederatedOIDC
-            aws-region: ap-south-1
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1.7.0
+        with:
+          role-to-assume: arn:aws:iam::030943376547:role/GitHubActionRole
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ap-south-1
 
-        - name: Add github actions IP to security group
-          run: |
-            aws ec2 authorize-security-group-ingress --group-name ${{secrets.AWS_SG_NAME}} --protocol tcp --port 22 --cidr ${{steps.ip.outputs.ipv4}}/32
-        
-        - name: executing ubuntu instance using ssh
-          uses: appleboy/ssh-action@v1.0.0
-          with:
-            host: ${{secrets.HOST_IP}}
-            username: ubuntu
-            key: ${{secrets.SSH_KEY}}
-            port: 22
-            script: |
-              echo ${{secrets.PROD_PASSWORD}} | su -S ${{secrets.PROD_USER_NAME}}
-              cd /home/shubhendu/fastapi_app/src/
-              git pull
-              echo ${{secrets.PROD_PASSWORD}} | sudo -S systemctl restart api
-              exit
-              exit
-        
-        - name: Remove github actions ip from security group
-          run: |
-            aws ec2 revoke-security-group-ingress --group-name ${{ secrets.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
-              
+      - name: Add github actions IP to security group
+        run: |
+          aws ec2 authorize-security-group-ingress --group-name ${{secrets.AWS_SG_NAME}} --protocol tcp --port 22 --cidr ${{steps.ip.outputs.ipv4}}/32
+
+      - name: executing ubuntu instance using ssh
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{secrets.HOST_IP}}
+          username: ubuntu
+          key: ${{secrets.SSH_KEY}}
+          port: 22
+          script: |
+            su - ${{secrets.PROD_USER_NAME}}
+            cd /home/shubhendu/fastapi_app/src/
+            git pull
+            echo ${{secrets.PROD_PASSWORD}} | sudo -S systemctl restart api
+            exit
+            exit
+
+      - name: Remove github actions ip from security group
+        run: |
+          aws ec2 revoke-security-group-ingress --group-name ${{ secrets.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
