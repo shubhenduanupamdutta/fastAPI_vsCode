@@ -15,7 +15,7 @@ jobs:
             PASSWORD: ${{secrets.PASSWORD}}
             USER: ${{secrets.USER}}
             DATABASE: ${{secrets.DB_NAME}}
-            HOST: ${{secrets.DB_HOST}}}
+            HOST: ${{secrets.DB_HOST}}
             DB_PORT: 5432
             SECRET_KEY: ${{secrets.SECRET_KEY}}
             ALGORITHM: ${{secrets.ALGORITHM}}
