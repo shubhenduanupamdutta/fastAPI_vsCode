@@ -35,25 +35,8 @@ jobs:
               --health-timeout 5s
               --health-retries 5
 
-        permissions:
-            id-token: write
-            contents: read
-
         steps:
 
-            # - name: Get github actions ip
-            #   id: ip
-            #   uses: haythem/public-ip@v1.3
-
-            # - name: configure aws credentials
-            #   uses: aws-actions/configure-aws-credentials@v1.7.0
-            #   with:
-            #     role-to-assume: arn:aws:iam::030943376547:role/GitHubActionRole
-            #     role-session-name:  GitHub_to_AWS_via_FederatedOIDC
-            #     aws-region: ap-south-1
-            # - name: Add github actions IP to security group
-            #   run: |
-                # aws ec2 authorize-security-group-ingress --group-name ${{secrets.AWS_SG_NAME}} --protocol tcp --port 5432 --cidr ${{steps.ip.outputs.ipv4}}/32    
             - name: Get our repository
               uses: actions/checkout@v4
 
@@ -73,12 +56,49 @@ jobs:
             
             - name: Test app with pytest
               run: pytest --disable-warnings -v -s
-
-            # - name: Remove github actions ip from security group
-            #   run: |
-            #     aws ec2 revoke-security-group-ingress --group-name ${{ secrets.AWS_SG_NAME }} --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
   
     deploy:
-        runs-on: ubuntu-latest
-        needs: build
+
+      runs-on: ubuntu-latest
+      needs: build
+
+      permissions:
+        id-token: write
+        contents: read
+
+      steps:
+
+        - name: Get github actions ip
+          id: ip
+          uses: haythem/public-ip@v1.3
+
+        - name: configure aws credentials
+          uses: aws-actions/configure-aws-credentials@v1.7.0
+          with:
+            role-to-assume: arn:aws:iam::030943376547:role/GitHubActionRole
+            role-session-name:  GitHub_to_AWS_via_FederatedOIDC
+            aws-region: ap-south-1
+
+        - name: Add github actions IP to security group
+          run: |
+            aws ec2 authorize-security-group-ingress --group-name ${{secrets.AWS_SG_NAME}} --protocol tcp --port 22 --cidr ${{steps.ip.outputs.ipv4}}/32
+        
+        - name: executing ubuntu instance using ssh
+          uses: appleboy/ssh-action@v1.0.0
+          with:
+            host: ${{secrets.HOST_IP}}
+            username: ubuntu
+            key: ${{secrets.SSH_KEY}}
+            port: 22
+            script: |
+              echo ${{secrets.PROD_PASSWORD}} | su -S ${{secrets.PROD_USER_NAME}}
+              cd /home/shubhendu/fastapi_app/src/
+              git pull
+              echo ${{secrets.PROD_PASSWORD}} | sudo -S systemctl restart api
+              exit
+              exit
+        
+        - name: Remove github actions ip from security group
+          run: |
+            aws ec2 revoke-security-group-ingress --group-name ${{ secrets.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
               
