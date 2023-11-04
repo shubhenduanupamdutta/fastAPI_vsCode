@@ -83,17 +83,14 @@ jobs:
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{secrets.HOST_IP}}
-          username: ubuntu
+          username: ${{secrets.PROD_USER_NAME}}
           key: ${{secrets.SSH_KEY}}
           port: 22
           script: |
-            sudo -i
-            su - shubhendu
             whoami
-            cd /home/shubhendu/fastapi_app/src/
+            cd /home/${{secrets.PROD_USER_NAME}}/fastapi_app/src/
             git pull
             echo ${{secrets.PROD_PASSWORD}} | sudo -S systemctl restart api
-            exit
             exit
             exit
 
