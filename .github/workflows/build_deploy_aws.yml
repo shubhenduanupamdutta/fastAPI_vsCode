@@ -87,7 +87,7 @@ jobs:
           key: ${{secrets.SSH_KEY}}
           port: 22
           script: |
-            su - ${{secrets.PROD_USER_NAME}}
+            su - shubhendu
             whoami
             cd /home/shubhendu/fastapi_app/src/
             git pull
