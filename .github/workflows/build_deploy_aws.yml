@@ -88,6 +88,7 @@ jobs:
           port: 22
           script: |
             su - ${{secrets.PROD_USER_NAME}}
+            whoami
             cd /home/shubhendu/fastapi_app/src/
             git pull
             echo ${{secrets.PROD_PASSWORD}} | sudo -S systemctl restart api
