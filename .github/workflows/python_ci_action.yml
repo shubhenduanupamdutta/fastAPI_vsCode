@@ -58,8 +58,8 @@ jobs:
                 if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
             
             - name: Test app with pytest
-              run: pytest
+              run: pytest --disable-warnings -v -s
 
             - name: Remove github actions ip from security group
               run: |
-                aws ec2 revoke-security-group-ingress --group-name ${{ secrets.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+                aws ec2 revoke-security-group-ingress --group-name ${{ secrets.AWS_SG_NAME }} --protocol tcp --port 5432 --cidr ${{ steps.ip.outputs.ipv4 }}/32
