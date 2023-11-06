@@ -40,7 +40,10 @@ def root():
     Returns:
         json: "message"
     """
-    return {"message": "Welcome to my API",
-            "New on 04th November 2023": "Deployed on AWS EC2 using CI/CD\
-                    using GitHub Actions."
-            }
+    return {
+        "message": "Welcome to my API",
+        "New on 04th November 2023":
+            "Deployed on AWS EC2 using CI/CD using GitHub Actions.",
+        "Documentation_SwaggerUI": "https://fastapishubhendu.xyz/docs/",
+        "Documentation_Redocly": "https://fastapishubhendu.xyz/redoc/"
+    }
